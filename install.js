@@ -2,9 +2,9 @@ var Service = require('../').Service;
 
 // Create a new service object
 var svc = new Service({
-  name:'Hello World',
+  name:'BreweryWebServer',
   description: 'The nodejs.org example web server.',
-  script: require('path').join(__dirname,'helloworld.js'),
+  script: require('path').join(__dirname,'index.js'),
   
   env:{
     name: "NODE_ENV",
