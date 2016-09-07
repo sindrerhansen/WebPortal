@@ -1,11 +1,15 @@
 var express = require('express');
 var app = express();
-// var bodyParser = require('body-parser')
+var http = require('http').createServer(app);
+var io = require('socket.io')(http);
+var bodyParser = require('body-parser');
+var lastTempArray = new Array();
 
 
 //file servings
 app.use(express.static(__dirname + '/public'));
 app.use('/bower_components',  express.static(__dirname + '/bower_components'));
+app.use('/node-modules',  express.static(__dirname + '/node-modules'));
 
 // parse application/json 
 // app.use(bodyParser.json()); // support json encoded bodies
@@ -13,21 +17,34 @@ app.use('/bower_components',  express.static(__dirname + '/bower_components'));
 
 app.post('/api/data',function(req, res)
 {
-   var temp = req.param('temp');
+  var timeNow = new Date();
+  var temp = req.param('temp');
+  var point={time:timeNow, value:temp};
+  if (lastTempArray.length < 500)
+  {
+    lastTempArray.push(point);
+  }
+  else{
+    lastTempArray.shift();
+    lastTempArray.push(point);
+  }
+  
   console.log("Temperature in living room: " + temp );
   console.log(Date.now());
+  var jsonObject=JSON.stringify(point);
+  io.emit('tempUpdate', jsonObject);
   res.end("Got it");
 });
 
-app.post('/', function(req, res)
-{
-    console.log("some one is sending")
-});
-
-app.get('/', function(req, res){
+app.get('/*', function(req, res){
   var name=req.query.name;
-  res.render('index.ejs',{user:name, title:"Breing site"})
+  res.render('index.ejs',{user:name, title:"Brewing site"})
 });
 
+io.on('connection', function(socket){
+  console.log('a user connected');
+  var jsonObject=JSON.stringify(lastTempArray);
+  io.emit('tempHistory', jsonObject);
+});
 
-app.listen(3000);
+http.listen(3000);
