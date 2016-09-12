@@ -4,6 +4,8 @@ var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 var bodyParser = require('body-parser');
 var lastTempArray = new Array();
+var lastTemp;
+var lastTime = Date.now();
 
 
 //file servings
@@ -20,20 +22,33 @@ app.post('/api/data',function(req, res)
   var timeNow = new Date();
   var temp = req.param('temp');
   var point={time:timeNow, value:temp};
-  if (lastTempArray.length < 500)
+  if(lastTemp==null)
   {
-    lastTempArray.push(point);
+    lastTemp=temp;
   }
-  else{
-    lastTempArray.shift();
-    lastTempArray.push(point);
+  var dif=Math.abs(lastTemp-temp);
+  var difTime=Date.now()-lastTime;
+  if (dif>0.5||difTime>60000)
+  {
+    lastTime=Date.now();
+    lastTemp=temp;
+    if (lastTempArray.length < 1000)
+    {
+      lastTempArray.push(point);
+    }
+    else{
+      lastTempArray.shift();
+      lastTempArray.push(point);
+    }
+    
+    console.log("Temperature in living room: " + temp );
+    console.log(Date.now());
+    var jsonObject=JSON.stringify(point);
+    io.emit('tempUpdate', jsonObject);
+    res.end("Got it");
   }
+    
   
-  console.log("Temperature in living room: " + temp );
-  console.log(Date.now());
-  var jsonObject=JSON.stringify(point);
-  io.emit('tempUpdate', jsonObject);
-  res.end("Got it");
 });
 
 app.get('/*', function(req, res){

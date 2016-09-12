@@ -9,7 +9,7 @@ angular.module('app').controller('DefaultController',['$scope', 'mySocket', '$ht
         var time = new Date(jsonData.time);
         vm.temp=value;
         vm.chartGauage.series[0].data[0] = value;
-        if(vm.chartConfig.series[0].data.length<500){
+        if(vm.chartConfig.series[0].data.length < 1000){
             vm.chartConfig.series[0].data.push({x:time , y:value});
         }
         else{
@@ -25,6 +25,7 @@ angular.module('app').controller('DefaultController',['$scope', 'mySocket', '$ht
       {
           var data = new Array();
           var jsonData = JSON.parse(samples);
+          var lastValue = parseFloat(jsonData[jsonData.length-1].value);
 
           jsonData.forEach(function(element) {
               var yValue = parseFloat(element.value);
@@ -32,6 +33,7 @@ angular.module('app').controller('DefaultController',['$scope', 'mySocket', '$ht
               data.push({x:xDate, y:yValue});
           }, this);
           vm.chartConfig.series[0].data =data;
+          vm.chartGauage.series[0].data[0] = lastValue;
           historyUpdated = true;
       }
   }
@@ -40,7 +42,8 @@ angular.module('app').controller('DefaultController',['$scope', 'mySocket', '$ht
   vm.chartConfig = {
         chart: {
             type: 'line',
-            zoomType: 'x'
+            animation: false,
+            reflow: false
         },
         title: {
             text: 'Temperature in livingroom'
@@ -57,31 +60,33 @@ angular.module('app').controller('DefaultController',['$scope', 'mySocket', '$ht
         yAxis: {
             title: {
                 text: 'Temperature (C)'
-            }
-          
+            },
+            min:0          
         },
+
+        // tooltip: {
+        //     headerFormat: '<b>{series.name}</b><br>',
+        //     pointFormat: '{point.x:%e. %b}: {point.y:.2f} m'
+        // },
+
         tooltip: {
-            headerFormat: '<b>{series.name}</b><br>',
-            pointFormat: '{point.x:%e. %b}: {point.y:.2f} m'
+            enabled: false,
+            animation: false
         },
         exporting: {
-            enabled: true
+            enabled:false
+        },
+        credits: {
+            enabled: false
         },
 
         plotOptions: {
-            spline: {
-                marker: {
-                    enabled: true
-                }
-            }
+            line: { animation: false, enableMouseTracking: false, stickyTracking: true, shadow: false, dataLabels: { style: { textShadow: false } } }
         },
 
         series: [{
             name: 'Temperature in livingroom',
-
-            data: [
-               
-            ]
+            data: []
         }]
     };
 
@@ -96,7 +101,7 @@ angular.module('app').controller('DefaultController',['$scope', 'mySocket', '$ht
             },
             pane: {
                 
-                size: '110%',
+                size: '100%',
                 startAngle: -150,
                 endAngle: 150,
                 background: {
