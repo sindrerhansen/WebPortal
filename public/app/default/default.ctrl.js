@@ -2,6 +2,8 @@ angular.module('app').controller('DefaultController',['$scope', 'mySocket', '$ht
   var vm = this;
   var historyUpdated = false;
   vm.temp;
+  vm.numberOfSaples;
+  
   mySocket.on('tempUpdate', function(sample) {
 
         var jsonData = JSON.parse(sample);
@@ -9,14 +11,17 @@ angular.module('app').controller('DefaultController',['$scope', 'mySocket', '$ht
         var time = new Date(jsonData.time);
         vm.temp=value;
         vm.chartGauage.series[0].data[0] = value;
-        if(vm.chartConfig.series[0].data.length < 1000){
-            vm.chartConfig.series[0].data.push({x:time , y:value});
+       
+        if(vm.chart.series[0].data.length < 5000){
+            // vm.chartConfig.series[0].data.push({x:time , y:value});
+            vm.chart.series[0].addPoint({x:time , y:value});
         }
         else{
-            vm.chartConfig.series[0].data.shift();
-            vm.chartConfig.series[0].data.push({x:time , y:value});
+            // vm.chartConfig.series[0].data.shift();
+            // vm.chartConfig.series[0].data.push({x:time , y:value});
+            vm.chart.series[0].addPoint({x:time , y:value}, true, true);
         }
-        
+        vm.numberOfSaples=vm.chart.series[0].data.length;
      // }
 
   });
@@ -32,12 +37,46 @@ angular.module('app').controller('DefaultController',['$scope', 'mySocket', '$ht
               var xDate = new Date(element.time);
               data.push({x:xDate, y:yValue});
           }, this);
-          vm.chartConfig.series[0].data =data;
+          vm.numberOfSaples=data.length;
+        //   vm.chartConfig.series[0].data =data;
+          
+          vm.chart.series[0].setData(data);
           vm.chartGauage.series[0].data[0] = lastValue;
           historyUpdated = true;
       }
   }
   );
+
+
+ vm.chart = new Highcharts.Chart( {
+      chart:{
+          renderTo: 'container',
+            type: 'line',
+            zoomType: 'xy'
+      },
+      title: {
+        text: 'Temperature Data'
+      },
+      xAxis:{
+          type: 'datetime'
+      },
+        yAxis: {
+            title: {
+                text: 'Temperature (C)'
+            },
+            min:0          
+        },
+        
+      series: [{
+        name: 'Temperature in livingroom',
+        turboThreshold:0,
+        data: []
+      }]
+    });
+
+
+
+
   vm.name = "DefaultController";
   vm.chartConfig = {
         chart: {
@@ -86,6 +125,7 @@ angular.module('app').controller('DefaultController',['$scope', 'mySocket', '$ht
 
         series: [{
             name: 'Temperature in livingroom',
+            turboThreshold:0,
             data: []
         }]
     };

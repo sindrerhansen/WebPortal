@@ -6,6 +6,8 @@ var bodyParser = require('body-parser');
 var lastTempArray = new Array();
 var lastTemp;
 var lastTime = Date.now();
+var jsonfile = require('jsonfile')
+ 
 
 
 //file servings
@@ -16,6 +18,15 @@ app.use('/node-modules',  express.static(__dirname + '/node-modules'));
 // parse application/json 
 // app.use(bodyParser.json()); // support json encoded bodies
 // app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+
+var file = "c:\\tmp\\data.json";
+var ret;
+try {
+  lastTempArray = jsonfile.readSyncFile(file);
+} catch (error) {
+
+}
+
 
 app.post('/api/data',function(req, res)
 {
@@ -28,17 +39,22 @@ app.post('/api/data',function(req, res)
   }
   var dif=Math.abs(lastTemp-temp);
   var difTime=Date.now()-lastTime;
-  if (dif>0.5||difTime>60000)
+  if (dif>0.5||difTime>500)
   {
     lastTime=Date.now();
     lastTemp=temp;
-    if (lastTempArray.length < 1000)
+    if (lastTempArray.length < 5000)
     {
       lastTempArray.push(point);
+      var file = '/tmp/data.json'
+      // jsonfile.writeFile(file, lastTempArray);
     }
     else{
       lastTempArray.shift();
       lastTempArray.push(point);
+      // jsonfile.writeFile(file, lastTempArray, function (err) {
+      // console.error(err)
+      // })
     }
     
     console.log("Temperature in living room: " + temp );
